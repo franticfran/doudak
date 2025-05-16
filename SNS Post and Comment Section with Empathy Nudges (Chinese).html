@@ -1,0 +1,280 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>社交媒体页面 - Yihao的帖子</title>
+  <style>
+    body {
+      font-family: 'PingFang SC', Arial, sans-serif;
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 10px;
+    }
+    .post {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .post p {
+      margin: 5px 0;
+    }
+    .comment-box {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      resize: none;
+      margin-bottom: 10px;
+    }
+    .heart-icon {
+      font-size: 20px;
+      color: #ff4d4f;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+    .post-btn {
+      padding: 8px 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .post-btn:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    .comment {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      position: relative;
+    }
+    .report-btn {
+      color: #666;
+      font-size: 14px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .report-btn:hover {
+      color: #ff4d4f;
+    }
+    .dropdown {
+      display: none;
+      position: absolute;
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+    .dropdown button {
+      display: block;
+      background: none;
+      border: none;
+      color: #007bff;
+      cursor: pointer;
+      padding: 5px;
+      text-align: left;
+    }
+    .dropdown button:hover {
+      color: #0056b3;
+    }
+    .report-btn.active + .dropdown {
+      display: block;
+    }
+    .prompt {
+      color: #888;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+    .feedback-message {
+      color: #28a745;
+      font-size: 14px;
+      margin-top: 10px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="post">
+    <p><strong>Yihao</strong>: 刚买的智能音箱连不上网，按照说明书操作了很多次还是失败……有没有人能帮帮我？</p>
+  </div>
+  <div id="comments">
+    <div class="comment">
+      <p><strong>Erhao</strong>: 好蠢</p>
+      <span class="report-btn">🚩 举报欺凌</span>
+      <div class="dropdown">
+        <button onclick="reportToModerators()">报告给管理员</button>
+        <button onclick="showSupportOptions()">向Yihao发送支持</button>
+        <button onclick="suggestResources()">推荐帮助资源</button>
+      </div>
+      <p class="prompt">这评论有点伤人，我们如何让讨论更友好？</p>
+    </div>
+    <div class="comment">
+      <p><strong>Sanhao</strong>: 我以前也遇到过这个问题，很多智能设备可能并不那么简单，有些人有点过分了吧</p>
+      <span class="report-btn">🚩 举报欺凌</span>
+      <div class="dropdown">
+        <button onclick="reportToModerators()">报告给管理员</button>
+        <button onclick="showSupportOptions()">向Yihao发送支持</button>
+        <button onclick="suggestResources()">推荐帮助资源</button>
+      </div>
+    </div>
+    <div class="comment">
+      <p><strong>Sihao</strong>: 这都搞不定？智商是负数吧……这种给正常人用的东西可能不太适合你</p>
+      <span class="report-btn">🚩 举报欺凌</span>
+      <div class="dropdown">
+        <button onclick="reportToModerators()">报告给管理员</button>
+        <button onclick="showSupportOptions()">向Yihao发送支持</button>
+        <button onclick="suggestResources()">推荐帮助资源</button>
+      </div>
+      <p class="prompt">这评论有点激烈，试试用友善的方式回应吧！</p>
+    </div>
+    <div class="comment">
+      <p><strong>Wuhao</strong>: 在这里问没人会帮你</p>
+      <span class="report-btn">🚩 举报欺凌</span>
+      <div class="dropdown">
+        <button onclick="reportToModerators()">报告给管理员</button>
+        <button onclick="showSupportOptions()">向Yihao发送支持</button>
+        <button onclick="suggestResources()">推荐帮助资源</button>
+      </div>
+    </div>
+  </div>
+  <div>
+    <span class="heart-icon">❤️</span>
+    <textarea class="comment-box" placeholder="你的友善评论十分重要，对Yihao发表你的感受" rows="3"></textarea>
+    <button class="post-btn" onclick="postComment()">发布评论</button>
+  </div>
+  <div class="feedback-message" id="feedback">感谢你的行动！你的支持让社区更温暖。</div>
+
+  <script>
+    const commentBox = document.querySelector('.comment-box');
+    const postBtn = document.querySelector('.post-btn');
+    const commentsDiv = document.getElementById('comments');
+    const feedbackMessage = document.getElementById('feedback');
+
+    // 动态轮换共情唤醒占位文本
+    const empathyPlaceholders = [
+      "你的友善评论十分重要，对Yihao发表你的感受",
+      "Yihao正面对恶意评论，你的善意能让他不再孤单！",
+      "你的支持对Yihao来说是一道光，现在分享你的鼓励吧！",
+      "想象Yihao看到你的评论会多安心，愿意为他发声吗？",
+      "Yihao的帖子正遭受攻击，你的友善评论能给他力量！"
+    ];
+    setInterval(() => {
+      commentBox.placeholder = empathyPlaceholders[Math.floor(Math.random() * empathyPlaceholders.length)];
+    }, 4000); // 每4秒切换
+
+    // Toggle dropdown for report button
+    document.querySelectorAll('.report-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.report-btn').forEach(otherBtn => {
+          if (otherBtn !== btn) otherBtn.classList.remove('active');
+        });
+        btn.classList.toggle('active');
+      });
+    });
+
+    // Post comment with delay
+    function postComment() {
+      const commentText = commentBox.value.trim();
+      if (!commentText) return;
+
+      postBtn.disabled = true;
+      setTimeout(() => {
+        const commentElement = document.createElement('div');
+        commentElement.className = 'comment';
+        commentElement.innerHTML = `
+          <p><strong>用户${Math.floor(Math.random() * 100)}</strong>: ${commentText}</p>
+          <span class="report-btn">🚩 举报欺凌</span>
+          <div class="dropdown">
+            <button onclick="reportToModerators()">报告给管理员</button>
+            <button onclick="showSupportOptions()">向Yihao发送支持</button>
+            <button onclick="suggestResources()">推荐帮助资源</button>
+          </div>
+        `;
+        commentsDiv.insertBefore(commentElement, commentsDiv.firstChild);
+        commentBox.value = '';
+        postBtn.disabled = false;
+
+        // Re-attach event listeners for new report buttons
+        commentElement.querySelector('.report-btn').addEventListener('click', () => {
+          document.querySelectorAll('.report-btn').forEach(otherBtn => {
+            if (otherBtn !== commentElement.querySelector('.report-btn')) otherBtn.classList.remove('active');
+          });
+          commentElement.querySelector('.report-btn').classList.toggle('active');
+        });
+      }, 2000); // 2秒延迟鼓励反思
+    }
+
+    // Report to moderators
+    function reportToModerators() {
+      alert('已匿名报告给管理员，感谢你的帮助！');
+      feedbackMessage.style.display = 'block';
+      feedbackMessage.textContent = '感谢你的行动！你的举报帮助我们维护了社区的友好氛围。';
+      setTimeout(() => feedbackMessage.style.display = 'none', 3000);
+    }
+
+    // Send support message
+    function showSupportOptions() {
+      const messages = ['你并不孤单！', '别担心，我们支持你！', '我也有过类似问题，加油！'];
+      const message = prompt('选择一条支持消息：\n1. 你并不孤单！\n2. 别担心，我们支持你！\n3. 我也有过类似问题，加油！', messages[0]);
+      if (message) {
+        alert(`已私密发送支持消息给Yihao：${message}`);
+        feedbackMessage.style.display = 'block';
+        feedbackMessage.textContent = '感谢你的支持！你的消息已送达Yihao。';
+        setTimeout(() => feedbackMessage.style.display = 'none', 3000);
+      }
+    }
+
+    // Suggest resources
+    function suggestResources() {
+      alert('已推荐帮助资源给Yihao，谢谢你的行动！');
+      feedbackMessage.style.display = 'block';
+      feedbackMessage.textContent = '感谢你的行动！你的建议已送达。';
+      setTimeout(() => feedbackMessage.style.display = 'none', 3000);
+    }
+  </script>
+</body>
+</html>
